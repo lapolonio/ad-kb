@@ -125,4 +125,5 @@ The graph is periodically refreshed as new PubMed, GWAS, and FAERS data becomes 
 This project is maintained by Leonardo Apolonio. If you are a researcher, clinician, or engineer working on Alzheimer's disease, drug repurposing, or biomedical knowledge graphs and want to collaborate — whether to extend the pipeline, add new data sources, or use the graph in your own work — get in touch.
 
 - **GitHub Issues:** feature requests, bug reports, data questions
-- **Email:** blazinazin215@gmail.com
+- **Email:** apolonio.leonardo@gmail.com
+- **LinkedIn:** https://www.linkedin.com/in/leonardo-apolonio/
