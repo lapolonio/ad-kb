@@ -1,0 +1,33 @@
+# Credentials — never commit
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data — keep directory structure, not contents
+data/*
+!data/.gitkeep
+
+# Neo4j dumps
+*.dump
+
+# Jupyter
+notebooks/.ipynb_checkpoints/
+
+# Claude Code
+.claude/
+
+# macOS
+.DS_Store

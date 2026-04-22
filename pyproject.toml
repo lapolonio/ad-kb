@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ad-kg"
+version = "0.1.0"
+description = "Alzheimer's Drug Repurposing Knowledge Graph Pipeline"
+requires-python = ">=3.10"
+dependencies = [
+    "pymed",
+    "requests",
+    "hdbscan",
+    "scikit-learn",
+    "neo4j",
+    "anthropic>=0.40.0",
+    "python-dotenv",
+    "pandas",
+    "scipy",
+    "tqdm",
+    "tenacity",
+    "numpy<2",
+]
+
+[project.optional-dependencies]
+# NLP extras: scispacy requires blis which fails to build on macOS 26 x86_64
+nlp = [
+    "scispacy",
+]
+# ML extras: sentence-transformers requires PyTorch which has no py313+x86_64 wheels
+ml = [
+    "sentence-transformers>=3.0,<4.0",
+]
+dev = [
+    "pytest",
+    "vcrpy",
+    "pytest-cov",
+    "jupyter",
+    "networkx",
+    "matplotlib",
+]
+
+[project.scripts]
+ad_kg = "ad_kg.cli:main"
+
+[tool.uv]
+required-environments = [
+    "sys_platform == 'darwin' and platform_machine == 'x86_64'",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ad_kg"]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests that require ML model downloads (deselect with -m 'not slow')",
+]
