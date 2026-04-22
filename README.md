@@ -11,39 +11,42 @@ GLP-1 agonists and metabolic pathway drugs.
 ```bash
 cd ad_kg
 cp .env.example .env
-# Edit .env with your API keys
-pip install -e ".[dev]"
+# Edit .env with your API keys and Neo4j credentials
+uv sync --dev --extra nlp --extra ml
 ```
 
-### 2. Start Neo4j
+### 2. Start Neo4j (local) or point to AuraDB
 
+For local development:
 ```bash
 docker compose up -d
 ```
 
+For AuraDB, set `NEO4J_URI=neo4j+s://<your-instance>.databases.neo4j.io` in `.env` — no Docker needed.
+
 ### 3. Run the pipeline
 
 ```bash
-# Fetch all data sources (add --limit 50 for a quick dev run)
-python -m ad_kg ingest
+# Fetch all data sources
+uv run python -m ad_kg ingest
 
 # NER + relation extraction via Claude
-python -m ad_kg extract
+uv run python -m ad_kg extract
 
 # Embed and canonicalize entities
-python -m ad_kg resolve
+uv run python -m ad_kg resolve
 
 # Load everything into Neo4j
-python -m ad_kg load
+uv run python -m ad_kg load
 
 # Run queries
-python -m ad_kg query --name whitespace_opportunity
+uv run python -m ad_kg query --name whitespace_opportunity
 ```
 
 ### 4. Run tests
 
 ```bash
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 ## Architecture
@@ -77,6 +80,9 @@ ClinTrials┘
 | `open_trials_bridge_genes` | Active trials testing drugs that hit bridge genes |
 | `protective_drugs_ranked` | All FAERS protective drugs ranked by ROR + literature support |
 | `semaglutide_neighbors` | Everything connected to semaglutide within 2 hops |
+| `faers_sensitivity_cohorts` | ROR across all sub-populations (overall, T2DM-only, elderly, post-2020) for drugs with a baseline protective signal |
+| `faers_cross_reaction_consistency` | Count of AD MedDRA reaction terms showing ROR < 1 per drug — high count = signal consistent across phenotypes |
+| `faers_subpopulation_comparison` | Side-by-side overall vs T2DM vs elderly vs post-2020 ROR — robustness check against confounding |
 
 ## Data Sources
 
