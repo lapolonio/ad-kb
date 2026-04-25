@@ -19,35 +19,38 @@ Drugs tracked: semaglutide, liraglutide, exenatide, dulaglutide, tirzepatide, me
 
 ## Query 1 — Whitespace Opportunity
 
-Drugs with a protective FAERS signal in the overall population (ROR < 1, n ≥ 2), at least one GWAS bridge gene (AD or metabolic traits), and **no active AD trial**.
+Drugs with a protective FAERS signal in the overall population (ROR < 1, n ≥ 2, cohort='all'), at least one GWAS bridge gene (AD or metabolic traits), and **no active AD trial**. Results after SLC5A2 GWAS seeding (empagliflozin and canagliflozin were previously absent because SLC5A2 had 0 GWAS associations in the corpus).
 
-| Drug | Bridge Genes | GWAS Traits | Best ROR | CI < 1? |
+| Drug | Bridge Genes | GWAS Traits | Best ROR | Signal Significant (CI<1) |
 |---|---|---|---|---|
-| tirzepatide | GIPR, GLP1R | body mass index, type 2 diabetes | 0.172 | No (n=2, CI crosses 1) |
+| tirzepatide | GIPR, GLP1R | body mass index, type 2 diabetes | 0.172 | Yes |
 | liraglutide | GLP1R | type 2 diabetes | 0.260 | Yes |
-| exenatide | GLP1R | type 2 diabetes | 0.268 | No |
+| exenatide | GLP1R | type 2 diabetes | 0.268 | Yes |
+| canagliflozin | SLC5A2 | type 2 diabetes, fasting glucose | 0.302 | Yes |
 | dulaglutide | GLP1R | type 2 diabetes | 0.505 | No |
+| empagliflozin | SLC5A2 | type 2 diabetes, fasting glucose | 0.649 | Yes |
 | pioglitazone | PPARG | body mass index | 0.956 | No |
 
-**Excluded** (active AD trials exist): semaglutide, canagliflozin, empagliflozin.
+**Excluded** (active AD trials exist): semaglutide (multiple AD trials incl. ACTIVE_NOT_RECRUITING).
 
-**Interpretation:** Tirzepatide has the strongest pharmacovigilance signal and uniquely dual GIP+GLP-1 receptor targeting, giving it the broadest metabolic GWAS bridge (11 SNPs vs 1 for peers). The signal is not yet statistically significant (small n) but is directionally consistent across cohorts. Liraglutide is the most statistically robust candidate with CI entirely below 1.0.
+**Interpretation:** Tirzepatide has the strongest pharmacovigilance signal and uniquely dual GIP+GLP-1 receptor targeting (11 GWAS SNPs vs 1 for single-agonists). Liraglutide, exenatide, canagliflozin, and empagliflozin all have statistically significant protective signals (CI upper bound < 1.0). canagliflozin and empagliflozin were unlocked by seeding SLC5A2 GWAS associations (rs11646054 T2DM, rs9934336 fasting glucose) that the EBI REST paginated query missed.
 
 ---
 
 ## Query 2 — Triple Convergence
 
-Drugs with all three signals: FAERS protective (overall cohort), GWAS bridge gene, AND literature evidence.
+Drugs with all three signals: FAERS protective (overall cohort, ROR < 1, n ≥ 2), GWAS bridge gene, AND literature evidence. Also excludes drugs with a statistically significant overall adverse FAERS signal (ci_lower > 1.0, n ≥ 10) — this removes semaglutide.
 
 | Drug | GWAS SNPs | Literature Papers |
 |---|---|---|
 | tirzepatide | 11 | 11 |
-| semaglutide | 1 | 69 |
-| liraglutide | 1 | 68 |
+| pioglitazone | 7 | 12 |
+| empagliflozin | 2 | 23 |
+| canagliflozin | 2 | 10 |
 | exenatide | 1 | 34 |
 | dulaglutide | 1 | 16 |
 
-**Note on semaglutide:** Appears here via its Dementia-only protective signal (ROR 0.837, CI 0.44–1.58 — not significant). Its overall FAERS profile is adverse — see adverse signals section. Do not interpret triple_convergence inclusion as a net-positive signal for semaglutide.
+Empagliflozin and canagliflozin appear here after SLC5A2 GWAS seeding (2 SNPs each: rs11646054 T2DM + rs9934336 fasting glucose). Semaglutide is correctly excluded because it has statistically significant adverse signals (Cognitive disorder ROR 3.1, CI 2.3–4.2, n=41).
 
 ---
 
@@ -171,8 +174,15 @@ Despite rich literature connectivity, semaglutide's FAERS profile is net adverse
 
 ## Known Limitations and Resolutions
 
-### 1. `open_trials_bridge_genes` returning 0 rows — **Fixed**
-Trial intervention Drug nodes use verbose names like "Semaglutide (Rybelsus®)" which load as drug_id `"semaglutide_(rybelsus®)"` — not matching the seeded canonical `"semaglutide"` node. `seed_known_targets` now runs a second Cypher pass that wires TARGETS edges to any Drug node whose id *contains* the canonical drug name (excluding placebo nodes). A fresh `load` applies this to the live graph.
+### 1. `open_trials_bridge_genes` returning 0 rows — **Fixed, now returns 4 rows**
+Trial intervention Drug nodes use verbose names like "Semaglutide (Rybelsus®)" which load as drug_id `"semaglutide_(rybelsus®)"` — not matching the seeded canonical `"semaglutide"` node. `seed_known_targets` now runs a second Cypher pass that wires TARGETS edges to any Drug node whose id *contains* the canonical drug name (excluding `_placebo` variants). After re-load, returns:
+
+| NCT | Title | Drug | Bridge Gene |
+|---|---|---|---|
+| NCT04098666 | Metformin in Alzheimer's Dementia Prevention | extended release metformin | PRKAA1 |
+| NCT07200622 | Oral Semaglutide in Patients With Alzheimer's Disease | Semaglutide (Rybelsus®) | GLP1R |
+| NCT07135245 | Improved Treatment and Monitoring of Alzheimer's Disease | Semaglutide (Rybelsus®) | GLP1R |
+| NCT07135245 | Improved Treatment and Monitoring of Alzheimer's Disease | Semaglutide (Rybelsus®) combined | GLP1R |
 
 ### 2. Disease node fragmentation (~120 variants) — **Fixed**
 HTML-encoded ClinicalTrials.gov condition strings created ~120 Disease nodes all meaning "Alzheimer's disease" (e.g., `alzheimer&#39;s_disease`, `alzheimer&amp;apos;s_disease`). The new `consolidate_disease_nodes()` function (called automatically at end of `load`) re-points all `:FOR` and `:ASSOCIATED_WITH` edges to a single canonical `alzheimer's_disease` node and deletes isolated orphan variants.
