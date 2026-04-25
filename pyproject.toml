@@ -60,3 +60,9 @@ python_functions = ["test_*"]
 markers = [
     "slow: marks tests that require ML model downloads (deselect with -m 'not slow')",
 ]
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.10.8",
+    "networkx>=3.4.2",
+]

@@ -38,18 +38,21 @@ ORDER BY best_ror ASC
     # 2. Drugs with all three signals: FAERS protective + GWAS gene + literature.
     #    Includes metabolic GWAS traits (T2DM, BMI, insulin resistance) because
     #    GLP-1 drugs target GLP1R/GIPR which have metabolic — not direct AD — GWAS hits.
-    #    Excludes drugs with a statistically significant adverse overall signal
-    #    (ci_lower > 1.0, n >= 10) to avoid the semaglutide paradox — where a
-    #    non-significant protective Dementia signal coexists with net-adverse FAERS.
+    #    Excludes drugs where significant overall adverse signals outnumber
+    #    significant protective signals (net-adverse FAERS profile).
+    #    This catches semaglutide (0 sig protective, 3 sig adverse) without
+    #    excluding liraglutide (2 sig protective, 1 sig adverse = net-protective).
     "triple_convergence": """
 MATCH (d:Drug)-[:PROTECTIVE_SIGNAL]->(f:FAERSReport)
 WHERE f.cohort = 'all' AND f.ror < 1.0 AND f.report_count >= 2
-WITH d
-
-WHERE NOT EXISTS {
-  MATCH (d)-[:ADVERSE_SIGNAL]->(adv:FAERSReport)
-  WHERE adv.cohort = 'all' AND adv.ci_lower > 1.0 AND adv.report_count >= 10
-}
+WITH d,
+     count { (d)-[:PROTECTIVE_SIGNAL]->(fp:FAERSReport)
+             WHERE fp.cohort = 'all' AND fp.ci_upper < 1.0
+               AND fp.report_count >= 10 } AS sig_protective,
+     count { (d)-[:ADVERSE_SIGNAL]->(fa:FAERSReport)
+             WHERE fa.cohort = 'all' AND fa.ci_lower > 1.0
+               AND fa.report_count >= 10 } AS sig_adverse
+WHERE sig_adverse <= sig_protective
 
 MATCH (d)-[:TARGETS|RELATED_TO*1..2]->(g:Gene)<-[:LINKED_TO]-(s:SNP)
    -[:ASSOCIATED_WITH]->(dis:Disease)
