@@ -505,11 +505,12 @@ def seed_known_targets(driver: Any) -> None:
                 )
                 # Also wire TARGETS for trial intervention Drug nodes whose id
                 # contains the canonical drug name (e.g., "semaglutide_(rybelsus®)").
-                # Excludes placebo nodes to avoid false positives.
+                # Excludes placebo nodes: both "placebo_(drug)" and "drug_placebo" forms.
                 session.run(
                     "MATCH (variant:Drug) "
                     "WHERE variant.id CONTAINS $drug_id "
                     "  AND NOT variant.id STARTS WITH 'placebo' "
+                    "  AND NOT variant.id CONTAINS '_placebo' "
                     "MATCH (g:Gene {id: $gene_id}) "
                     "MERGE (variant)-[:TARGETS]->(g)",
                     drug_id=drug_id,
