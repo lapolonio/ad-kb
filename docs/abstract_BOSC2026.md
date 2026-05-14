@@ -1,6 +1,6 @@
 # BOSC 2026 Abstract — Draft
 **Track:** Abstracts - BOSC: Bioinformatics Open Source Conference
-**Submitted by:** Leo (blazinazin215@gmail.com)
+**Submitted by:** Leo (apolonio.leonardo@gmail.com)
 **Status:** Draft — April 24, 2026
 
 ---
